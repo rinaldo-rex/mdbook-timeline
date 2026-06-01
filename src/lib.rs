@@ -74,6 +74,18 @@ const TIMELINE_CSS: &str = r#"
     box-shadow: 0 0 0 3px rgba(32, 96, 159, 0.2);
 }
 
+.tl-entry.hovered::before {
+    background: var(--links, #20609f);
+    opacity: 1;
+    box-shadow: 0 0 0 3px rgba(128,128,128,0.15);
+    animation: tl-dot-pulse 0.8s ease-in-out infinite;
+}
+
+@keyframes tl-dot-pulse {
+    0%, 100% { box-shadow: 0 0 0 3px rgba(128,128,128,0.15); }
+    50% { box-shadow: 0 0 0 8px rgba(128,128,128,0.20); }
+}
+
 .tl-label-wrap {
     display: flex;
     align-items: flex-start;
@@ -207,11 +219,6 @@ const TIMELINE_CSS: &str = r#"
 .tl.dimmed .tl-entry.hovered { opacity: 1; }
 .tl.dimmed .tl-duration-label { opacity: 0.15; }
 .tl.dimmed .tl-duration-label.keep { opacity: 0.45 !important; }
-.tl.dimmed .tl-entry.hovered::before {
-    background: var(--links, #20609f);
-    opacity: 1;
-    box-shadow: 0 0 0 3px rgba(32, 96, 159, 0.2);
-}
 "#;
 
 // ── JS ──────────────────────────────────────────────────────────────
