@@ -1,0 +1,12 @@
+[book]
+authors = ["mdBook Timeline Demo"]
+language = "en"
+src = "src"
+title = "Timeline Preprocessor Demo"
+
+[preprocessor.timeline]
+timeline-marker = "journey"
+# Use the debug binary from the parent project (or `cargo install mdbook-timeline`)
+command = "../target/debug/mdbook-timeline"
+
+[output.html]

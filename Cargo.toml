@@ -1,0 +1,18 @@
+[package]
+name = "mdbook-timeline"
+version = "0.1.0"
+edition = "2021"
+description = "A mdBook preprocessor that renders interactive timelines with HTML + CSS"
+license = "MIT"
+repository = "https://github.com/rinaldorex/mdbook-timeline"
+
+[[bin]]
+name = "mdbook-timeline"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+mdbook-preprocessor = "0.5"
+regex = "1"
+serde_json = "1"
+anyhow = "1"
