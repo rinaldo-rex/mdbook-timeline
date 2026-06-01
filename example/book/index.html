@@ -358,9 +358,11 @@
     color: var(--fg);
 }
 
-.tl.has-hover .tl-entry { opacity: 0.3; transition: opacity 0.25s ease; }
-.tl.has-hover .tl-entry.hovered { opacity: 1; }
-.tl.has-hover .tl-entry.hovered::before {
+.tl.dimmed .tl-entry { opacity: 0.3; transition: opacity 0.25s ease; }
+.tl.dimmed .tl-entry.hovered { opacity: 1; }
+.tl.dimmed .tl-duration-label { opacity: 0.15; }
+.tl.dimmed .tl-duration-label.keep { opacity: 0.45 !important; }
+.tl.dimmed .tl-entry.hovered::before {
     background: var(--links, #20609f);
     opacity: 1;
     box-shadow: 0 0 0 3px rgba(32, 96, 159, 0.2);
@@ -423,7 +425,71 @@ a career spanning two decades of innovation.</p>
 
 <script>
 
-(function(){var n=new Date().getFullYear();document.querySelectorAll(".tl").forEach(function(t){var e=t.querySelectorAll(".tl-entry"),r=null!==t.querySelector(".tl-duration-gap");e.forEach(function(e){e.addEventListener("mouseenter",function(){t.classList.add("has-hover"),e.classList.add("hovered")}),e.addEventListener("mouseleave",function(){t.classList.remove("has-hover"),e.classList.remove("hovered")})}),e.forEach(function(t){var e=t.querySelector(".tl-label"),r=e?e.textContent.trim():"",a=parseInt(r,10);if(!isNaN(a)&&a>0&&r===String(a)){var i=n-a,o=0===i?"This year":1===i?"1 year ago":i+" years ago",l=document.createElement("span");l.className="tl-years-ago",l.textContent=o;var c=t.querySelector(".tl-card");c&&c.appendChild(l)}}),r&&requestAnimationFrame(function(){requestAnimationFrame(function(){for(var r=t.querySelectorAll(".tl-duration-gap"),a=t.getBoundingClientRect(),i=0;i<r.length;i++){var o=e[i],l=e[i+1];if(!o||!l)return;var c=r[i].getAttribute("data-label");if(!c)return;var s=o.getBoundingClientRect().top-a.top+34.5,d=l.getBoundingClientRect().top-a.top+34.5,u=document.createElement("span");u.className="tl-duration-label",u.textContent=c,u.style.left="120px",u.style.top=(s+d)/2+"px",t.appendChild(u)}})})})})();
+(function () {
+    var currentYear = new Date().getFullYear();
+
+    document.querySelectorAll(".tl").forEach(function (timeline) {
+        var entries = timeline.querySelectorAll(".tl-entry");
+        var hasGaps = timeline.querySelector(".tl-duration-gap") !== null;
+
+        entries.forEach(function (entry, idx) {
+            entry.addEventListener("mouseenter", function () {
+                timeline.classList.add("dimmed");
+                entry.classList.add("hovered");
+                var labels = timeline.querySelectorAll(".tl-duration-label");
+                labels.forEach(function (lbl, li) {
+                    lbl.classList.toggle("keep", li === idx - 1 || li === idx);
+                });
+            });
+            entry.addEventListener("mouseleave", function () {
+                timeline.classList.remove("dimmed");
+                entry.classList.remove("hovered");
+                var labels = timeline.querySelectorAll(".tl-duration-label");
+                labels.forEach(function (lbl) { lbl.classList.remove("keep"); });
+            });
+        });
+
+        entries.forEach(function (entry) {
+            var labelEl = entry.querySelector(".tl-label");
+            var text = labelEl ? labelEl.textContent.trim() : "";
+            var yr = parseInt(text, 10);
+            if (!isNaN(yr) && yr > 0 && text === String(yr)) {
+                var diff = currentYear - yr;
+                var ago = diff === 0 ? "This year" : diff === 1 ? "1 year ago" : diff + " years ago";
+                var span = document.createElement("span");
+                span.className = "tl-years-ago";
+                span.textContent = ago;
+                var card = entry.querySelector(".tl-card");
+                if (card) card.appendChild(span);
+            }
+        });
+
+        if (!hasGaps) return;
+        requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+                var gaps = timeline.querySelectorAll(".tl-duration-gap");
+                var containerTop = timeline.getBoundingClientRect().top;
+                var DOT = 30 + 4.5;
+                for (var i = 0; i < gaps.length; i++) {
+                    var a = entries[i];
+                    var b = entries[i + 1];
+                    if (!a || !b) continue;
+                    var label = gaps[i].getAttribute("data-label");
+                    if (!label) continue;
+                    var topA = a.getBoundingClientRect().top - containerTop + DOT;
+                    var topB = b.getBoundingClientRect().top - containerTop + DOT;
+                    var mid = (topA + topB) / 2;
+                    var span = document.createElement("span");
+                    span.className = "tl-duration-label";
+                    span.textContent = label;
+                    span.style.left = "120px";
+                    span.style.top = mid + "px";
+                    timeline.appendChild(span);
+                }
+            });
+        });
+    });
+})();
 
 </script>
                     </main>
@@ -455,6 +521,22 @@ a career spanning two decades of innovation.</p>
         <template id=fa-play><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/></svg></span></template>
         <template id=fa-clock-rotate-left><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M75 75L41 41C25.9 25.9 0 36.6 0 57.9V168c0 13.3 10.7 24 24 24H134.1c21.4 0 32.1-25.9 17-41l-30.8-30.8C155 85.5 203 64 256 64c106 0 192 86 192 192s-86 192-192 192c-40.8 0-78.6-12.7-109.7-34.4c-14.5-10.1-34.4-6.6-44.6 7.9s-6.6 34.4 7.9 44.6C151.2 495 201.7 512 256 512c141.4 0 256-114.6 256-256S397.4 0 256 0C185.3 0 121.3 28.7 75 75zm181 53c-13.3 0-24 10.7-24 24V256c0 6.4 2.5 12.5 7 17l72 72c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-65-65V152c0-13.3-10.7-24-24-24z"/></svg></span></template>
 
+        <!-- Livereload script (if served using the cli tool) -->
+        <script>
+            const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsAddress = wsProtocol + "//" + location.host + "/" + "__livereload";
+            const socket = new WebSocket(wsAddress);
+            socket.onmessage = function (event) {
+                if (event.data === "reload") {
+                    socket.close();
+                    location.reload();
+                }
+            };
+
+            window.onbeforeunload = function() {
+                socket.close();
+            }
+        </script>
 
 
         <script>

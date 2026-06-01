@@ -203,9 +203,11 @@ const TIMELINE_CSS: &str = r#"
     color: var(--fg);
 }
 
-.tl.has-hover .tl-entry { opacity: 0.3; transition: opacity 0.25s ease; }
-.tl.has-hover .tl-entry.hovered { opacity: 1; }
-.tl.has-hover .tl-entry.hovered::before {
+.tl.dimmed .tl-entry { opacity: 0.3; transition: opacity 0.25s ease; }
+.tl.dimmed .tl-entry.hovered { opacity: 1; }
+.tl.dimmed .tl-duration-label { opacity: 0.15; }
+.tl.dimmed .tl-duration-label.keep { opacity: 0.45 !important; }
+.tl.dimmed .tl-entry.hovered::before {
     background: var(--links, #20609f);
     opacity: 1;
     box-shadow: 0 0 0 3px rgba(32, 96, 159, 0.2);
@@ -215,7 +217,71 @@ const TIMELINE_CSS: &str = r#"
 // ── JS ──────────────────────────────────────────────────────────────
 
 const TIMELINE_JS: &str = r#"
-(function(){var n=new Date().getFullYear();document.querySelectorAll(".tl").forEach(function(t){var e=t.querySelectorAll(".tl-entry"),r=null!==t.querySelector(".tl-duration-gap");e.forEach(function(e){e.addEventListener("mouseenter",function(){t.classList.add("has-hover"),e.classList.add("hovered")}),e.addEventListener("mouseleave",function(){t.classList.remove("has-hover"),e.classList.remove("hovered")})}),e.forEach(function(t){var e=t.querySelector(".tl-label"),r=e?e.textContent.trim():"",a=parseInt(r,10);if(!isNaN(a)&&a>0&&r===String(a)){var i=n-a,o=0===i?"This year":1===i?"1 year ago":i+" years ago",l=document.createElement("span");l.className="tl-years-ago",l.textContent=o;var c=t.querySelector(".tl-card");c&&c.appendChild(l)}}),r&&requestAnimationFrame(function(){requestAnimationFrame(function(){for(var r=t.querySelectorAll(".tl-duration-gap"),a=t.getBoundingClientRect(),i=0;i<r.length;i++){var o=e[i],l=e[i+1];if(!o||!l)return;var c=r[i].getAttribute("data-label");if(!c)return;var s=o.getBoundingClientRect().top-a.top+34.5,d=l.getBoundingClientRect().top-a.top+34.5,u=document.createElement("span");u.className="tl-duration-label",u.textContent=c,u.style.left="120px",u.style.top=(s+d)/2+"px",t.appendChild(u)}})})})})();
+(function () {
+    var currentYear = new Date().getFullYear();
+
+    document.querySelectorAll(".tl").forEach(function (timeline) {
+        var entries = timeline.querySelectorAll(".tl-entry");
+        var hasGaps = timeline.querySelector(".tl-duration-gap") !== null;
+
+        entries.forEach(function (entry, idx) {
+            entry.addEventListener("mouseenter", function () {
+                timeline.classList.add("dimmed");
+                entry.classList.add("hovered");
+                var labels = timeline.querySelectorAll(".tl-duration-label");
+                labels.forEach(function (lbl, li) {
+                    lbl.classList.toggle("keep", li === idx - 1 || li === idx);
+                });
+            });
+            entry.addEventListener("mouseleave", function () {
+                timeline.classList.remove("dimmed");
+                entry.classList.remove("hovered");
+                var labels = timeline.querySelectorAll(".tl-duration-label");
+                labels.forEach(function (lbl) { lbl.classList.remove("keep"); });
+            });
+        });
+
+        entries.forEach(function (entry) {
+            var labelEl = entry.querySelector(".tl-label");
+            var text = labelEl ? labelEl.textContent.trim() : "";
+            var yr = parseInt(text, 10);
+            if (!isNaN(yr) && yr > 0 && text === String(yr)) {
+                var diff = currentYear - yr;
+                var ago = diff === 0 ? "This year" : diff === 1 ? "1 year ago" : diff + " years ago";
+                var span = document.createElement("span");
+                span.className = "tl-years-ago";
+                span.textContent = ago;
+                var card = entry.querySelector(".tl-card");
+                if (card) card.appendChild(span);
+            }
+        });
+
+        if (!hasGaps) return;
+        requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+                var gaps = timeline.querySelectorAll(".tl-duration-gap");
+                var containerTop = timeline.getBoundingClientRect().top;
+                var DOT = 30 + 4.5;
+                for (var i = 0; i < gaps.length; i++) {
+                    var a = entries[i];
+                    var b = entries[i + 1];
+                    if (!a || !b) continue;
+                    var label = gaps[i].getAttribute("data-label");
+                    if (!label) continue;
+                    var topA = a.getBoundingClientRect().top - containerTop + DOT;
+                    var topB = b.getBoundingClientRect().top - containerTop + DOT;
+                    var mid = (topA + topB) / 2;
+                    var span = document.createElement("span");
+                    span.className = "tl-duration-label";
+                    span.textContent = label;
+                    span.style.left = "120px";
+                    span.style.top = mid + "px";
+                    timeline.appendChild(span);
+                }
+            });
+        });
+    });
+})();
 "#;
 
 // ── Data structures ─────────────────────────────────────────────────
