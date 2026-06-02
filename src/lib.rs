@@ -296,6 +296,8 @@ const TIMELINE_JS: &str = r#"
 struct TimelineConfig {
     markers: Vec<String>,
     duration_gaps: bool,
+    before: Option<String>,
+    after: Option<String>,
 }
 
 impl TimelineConfig {
@@ -322,6 +324,16 @@ impl TimelineConfig {
                 .ok()
                 .flatten()
                 .unwrap_or(true),
+            before: ctx
+                .config
+                .get::<String>("preprocessor.timeline.before")
+                .ok()
+                .flatten(),
+            after: ctx
+                .config
+                .get::<String>("preprocessor.timeline.after")
+                .ok()
+                .flatten(),
         }
     }
 }
@@ -444,7 +456,7 @@ fn parse_card(_label: &str, card: &str) -> TimelineEntry {
         }
 
         if trimmed.starts_with("#### ") {
-            title = Some(escape_html(trimmed[5..].trim()));
+            title = Some(trimmed[5..].trim().to_string());
             continue;
         }
 
@@ -454,7 +466,7 @@ fn parse_card(_label: &str, card: &str) -> TimelineEntry {
                 .name("alt")
                 .map(|a| a.as_str().trim().to_string())
                 .unwrap_or_default();
-            images.push((escape_html(&url), escape_html(&alt)));
+            images.push((url, alt));
         }
 
         if let Some(colon) = trimmed.find(':') {
@@ -462,14 +474,14 @@ fn parse_card(_label: &str, card: &str) -> TimelineEntry {
             let val = trimmed[colon + 1..].trim();
 
             match key.as_str() {
-                "company" => company = Some(escape_html(val)),
-                "location" => location = Some(escape_html(val)),
-                "desc" | "description" => desc = Some(escape_html(val)),
+                "company" => company = Some(val.to_string()),
+                "location" => location = Some(val.to_string()),
+                "desc" | "description" => desc = Some(val.to_string()),
                 "active" => active = val.eq_ignore_ascii_case("true"),
                 "tags" => {
                     tags = val
                         .split('|')
-                        .map(|t| escape_html(t.trim()))
+                        .map(|t| t.trim().to_string())
                         .filter(|t| !t.is_empty())
                         .collect();
                 }
@@ -479,7 +491,7 @@ fn parse_card(_label: &str, card: &str) -> TimelineEntry {
     }
 
     TimelineEntry {
-        label: escape_html(_label),
+        label: _label.to_string(),
         title,
         company,
         location,
@@ -493,9 +505,16 @@ fn parse_card(_label: &str, card: &str) -> TimelineEntry {
 // ── Rendering ───────────────────────────────────────────────────────
 
 fn render_timeline(entries: &[TimelineEntry], id: usize, config: &TimelineConfig) -> String {
-    let mut html = format!(
+    let mut html = String::new();
+
+    if let Some(ref before) = config.before {
+        html.push_str(before);
+        html.push('\n');
+    }
+
+    html.push_str(&format!(
         r#"<div class="tl" id="tl-{id}">"#
-    );
+    ));
 
     for (i, entry) in entries.iter().enumerate() {
         html.push_str(&render_entry(entry));
@@ -505,6 +524,12 @@ fn render_timeline(entries: &[TimelineEntry], id: usize, config: &TimelineConfig
     }
 
     html.push_str("</div>");
+
+    if let Some(ref after) = config.after {
+        html.push('\n');
+        html.push_str(after);
+    }
+
     html
 }
 
@@ -566,13 +591,6 @@ fn render_gap(a: &TimelineEntry, b: &TimelineEntry, idx: usize) -> String {
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────
-
-fn escape_html(s: &str) -> String {
-    s.replace('&', "&amp;")
-        .replace('<', "&lt;")
-        .replace('>', "&gt;")
-        .replace('"', "&quot;")
-}
 
 fn compute_gap_label(a: &str, b: &str) -> Option<String> {
     let x: i64 = a.parse().ok()?;
@@ -671,7 +689,7 @@ company: Company B
     }
 
     #[test]
-    fn test_html_escaping() {
+    fn test_html_in_values_is_preserved() {
         let input = r#"
 {{label}}<script>alert(1)</script>{{/label}}
 {{card-start}}
@@ -681,11 +699,13 @@ tags: XSS | <img onerror=alert(1)>
 {{card-end}}
 "#;
         let entries = parse_entries(input);
-        let e = &entries[0];
-        assert!(!e.label.contains('<'));
-        assert!(!e.label.contains('>'));
-        assert!(e.label.contains("&lt;script&gt;"));
-        assert_eq!(e.company.as_deref(), Some("Evil &amp; Co."));
+        // Values are no longer escaped in parse_card — HTML from other
+        // preprocessors (e.g. inplace-note) must be preserved.
+        assert_eq!(entries[0].label, "<script>alert(1)</script>");
+        assert_eq!(entries[0].title.as_deref(), Some("<b>Bold Title</b>"));
+        assert_eq!(entries[0].company.as_deref(), Some("Evil & Co."));
+        assert_eq!(entries[0].tags[0], "XSS");
+        assert_eq!(entries[0].tags[1], "<img onerror=alert(1)>");
     }
 
     #[test]

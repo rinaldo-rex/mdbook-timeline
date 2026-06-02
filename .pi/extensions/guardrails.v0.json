@@ -4,9 +4,7 @@
     "allowedPaths": [
       "~/.pi/agent/skills/mdbook-preprocessor/references/",
       "~/.cargo/registry/",
-      "/tmp/",
-      "/dev/"
+      "/tmp/"
     ]
-  },
-  "version": "0.9.0-20260327"
+  }
 }

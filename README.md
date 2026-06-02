@@ -59,15 +59,23 @@ Add to your `book.toml`:
 
 All options live under `[preprocessor.timeline]` in `book.toml`:
 
-| Option             | Type   | Default      | Description                                              |
-|--------------------|--------|--------------|----------------------------------------------------------|
-| `timeline-marker`  | string | `"timeline"` | The word used in `{{marker}}`/`{{/marker}}` blocks       |
-| `duration-gaps`    | bool   | `true`       | Show duration labels between entries                     |
+| Option             | Type     | Default      | Description                                              |
+|--------------------|----------|--------------|----------------------------------------------------------|
+| `timeline-marker`  | string   | `"timeline"` | The word used in `{{marker}}`/`{{/marker}}` blocks       |
+| `duration-gaps`    | bool     | `true`       | Show duration labels between entries                     |
+| `before`           | [string] | `[]`         | Run this preprocessor **before** the named preprocessors |
+| `after`            | [string] | `[]`         | Run this preprocessor **after** the named preprocessors  |
 
-Example custom marker:
+The `before` and `after` keys are [standard mdBook preprocessor config](https://rust-lang.github.io/mdBook/format/configuration/preprocessors.html#regular-preprocessors)
+that control execution order relative to other preprocessors. mdBook handles them
+automatically — the preprocessor does not need code changes.
+
+For example, to run before the built-in `index` preprocessor and after `links`:
 
 ```toml
 [preprocessor.timeline]
+before = ["index"]
+after = ["links"]
 timeline-marker = "journey"
 ```
 
