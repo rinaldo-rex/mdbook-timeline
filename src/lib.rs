@@ -256,8 +256,16 @@ const TIMELINE_JS: &str = r#"
         entries.forEach(function (entry) {
             var labelEl = entry.querySelector(".tl-label");
             var text = labelEl ? labelEl.textContent.trim() : "";
-            var yr = parseInt(text, 10);
-            if (!isNaN(yr) && yr > 0 && text === String(yr)) {
+            var yr = null;
+            // Single year label, e.g. "2021"
+            if (/^\d{4}$/.test(text)) {
+                yr = parseInt(text, 10);
+            } else {
+                // Year range, e.g. "2019-2021" / "2019 – 2021" → use the last (max) year
+                var m = text.match(/\b(1[89]\d{2}|20\d{2})\b\s*[-\u2013\u2014]\s*\b(1[89]\d{2}|20\d{2})\b/);
+                if (m) yr = Math.max(parseInt(m[1], 10), parseInt(m[2], 10));
+            }
+            if (yr !== null && yr > 0) {
                 var diff = currentYear - yr;
                 var ago = diff === 0 ? "This year" : diff === 1 ? "1 year ago" : diff + " years ago";
                 var span = document.createElement("span");
@@ -699,10 +707,37 @@ fn join_desc_block(raw: Vec<String>) -> String {
     paragraphs.join("\n\n")
 }
 
+/// Parse a year label into its (first, last) bounds. A single year like
+/// `2021` yields `(2021, 2021)`; a range like `2019-2021` (or `2019 – 2021`,
+/// `2019—2021`) yields the resolved bounds. Non-numeric labels return `None`.
+/// Bounds are normalised so the range order does not matter.
+fn parse_year_bounds(label: &str) -> Option<(i64, i64)> {
+    let t = label.trim();
+    if let Ok(y) = t.parse::<i64>() {
+        return Some((y, y));
+    }
+    let idx = t
+        .char_indices()
+        .find_map(|(i, c)| {
+            (c == '-' || c == '\u{2013}' || c == '\u{2014}').then_some(i)
+        })?;
+    let lo = t[..idx].trim().parse::<i64>().ok()?;
+    let hi = t[idx..]
+        .trim_start_matches(['-', '\u{2013}', '\u{2014}'])
+        .trim()
+        .parse::<i64>()
+        .ok()?;
+    Some((lo.min(hi), lo.max(hi)))
+}
+
+/// Duration between two vertically adjacent entries. The **upper** entry
+/// (`a`) contributes its *first* year and the **lower** entry (`b`) contributes
+/// its *last* year, so with a range `2019-2021` the gap above the card uses `2021`
+/// and the gap below it uses `2019`.
 fn compute_gap_label(a: &str, b: &str) -> Option<String> {
-    let x: i64 = a.parse().ok()?;
-    let y: i64 = b.parse().ok()?;
-    let diff = x - y;
+    let (a_lo, _a_hi) = parse_year_bounds(a)?;
+    let (_b_lo, b_hi) = parse_year_bounds(b)?;
+    let diff = a_lo - b_hi;
     if diff <= 0 {
         Some("< 1 Year".to_string())
     } else if diff == 1 {
@@ -793,6 +828,36 @@ company: Company B
             Some("< 1 Year".to_string())
         );
         assert_eq!(compute_gap_label("Ancient", "Medieval"), None);
+    }
+
+    #[test]
+    fn test_compute_gap_label_with_range() {
+        // Above a range card: the card contributes its LAST year (2023).
+        assert_eq!(
+            compute_gap_label("2025", "2021-2023"),
+            Some("2 Years".to_string())
+        );
+        // Below a range card: the card contributes its FIRST year (2021).
+        assert_eq!(
+            compute_gap_label("2021-2023", "2019"),
+            Some("2 Years".to_string())
+        );
+        // Range above, range below.
+        assert_eq!(
+            compute_gap_label("2020-2022", "2017-2018"),
+            Some("2 Years".to_string())
+        );
+    }
+
+    #[test]
+    fn test_parse_year_bounds() {
+        assert_eq!(parse_year_bounds("2021"), Some((2021, 2021)));
+        assert_eq!(parse_year_bounds("2019-2021"), Some((2019, 2021)));
+        assert_eq!(parse_year_bounds("2019 - 2021"), Some((2019, 2021)));
+        assert_eq!(parse_year_bounds("2019\u{2013}2021"), Some((2019, 2021))); // en-dash
+        // Reversed ranges are normalised.
+        assert_eq!(parse_year_bounds("2021-2019"), Some((2019, 2021)));
+        assert_eq!(parse_year_bounds("Ancient"), None);
     }
 
     #[test]

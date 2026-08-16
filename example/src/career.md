@@ -18,7 +18,7 @@ tags: Strategic Planning | AI Systems | Team Leadership
 active: true
 {{card-end}}
 
-{{label}}2021{{/label}}
+{{label}}2019-2021{{/label}}
 {{card-start}}
 #### Senior Product Architect
 company: CloudStream Infrastructure

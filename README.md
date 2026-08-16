@@ -37,7 +37,7 @@ This produces an interactive timeline with:
 - Cards with title, company, location, description, tags, and images
 - **Active** badge for current entries
 - Duration labels between entries (e.g., "3 Years")
-- "Years ago" indicator on hover (for numeric labels)
+- "Years ago" indicator on hover (for numeric labels and year ranges)
 - Hover dimming: all other entries fade when one is highlighted
 - Full dark/light theme support via mdBook CSS variables
 
@@ -132,6 +132,24 @@ The label is the time marker — it can be a year, month, era name, or any text:
   "years ago" indicator that appears on hover.
 - The duration gap between two entries is auto-computed when both labels parse
   as integers.
+
+#### Year ranges
+
+A label can also be a **range** of two years, e.g. `2019-2021`. The range
+affects the computed duration gaps on either side:
+
+- The gap **below** the entry uses the range's **first** year.
+- The gap **above** the entry uses the range's **last** year.
+
+```
+{{label}}2025{{/label}}   ─ borrowed gap: 2025 − 2021 (last)      = 3 Years
+{{label}}2021-2023{{/label}}
+                          ─       gap: 2021 (first) − 2019        = 2 Years
+{{label}}2019{{/label}}
+```
+
+Spacing is optional (`2019 - 2021`) and en/em dashes work too. The hover
+"years ago" indicator for a range uses its **last** year.
 
 ### Card Fields
 
