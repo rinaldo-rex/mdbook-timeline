@@ -329,6 +329,10 @@
     color: var(--fg);
 }
 
+/* Paragraphs inside a multi-line description keep the card's line-height. */
+.tl-desc p { margin: 0 0 12px 0; line-height: 1.75; }
+.tl-desc p:last-child { margin-bottom: 0; }
+
 .tl-image {
     width: 100%;
     border-radius: 6px;
@@ -388,7 +392,11 @@ a career spanning two decades of innovation.</p>
 <h3>Executive Director of Innovation</h3>
 <span class="tl-badge-active">Active</span></div>
 <div class="tl-company">Global Tech Solutions <span class="tl-location">• London, UK</span></div>
-<p class="tl-desc">Leading the transformation of archival systems through <strong>AI-driven</strong> indexing and <em>semantic search</em>. Managed a team of 45 engineers using <code>Rust</code>, <code>mdBook</code>, and <del>legacy monoliths</del> modern services to deliver the next generation of digital heritage platforms.</p>
+<div class="tl-desc">
+<p>Leading the transformation of archival systems through <strong>AI-driven</strong> indexing and <em>semantic search</em>.</p>
+
+<p>Managed a team of 45 engineers using <code>Rust</code>, <code>mdBook</code>, and <del>legacy monoliths</del> modern services to deliver the next generation of digital heritage platforms.</p>
+</div>
 <div class="tl-tags"><span class="tl-tag">Strategic Planning</span><span class="tl-tag">AI Systems</span><span class="tl-tag">Team Leadership</span></div>
 </div>
 </div>

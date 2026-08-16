@@ -10,7 +10,10 @@ a career spanning two decades of innovation.
 #### Executive Director of Innovation
 company: Global Tech Solutions
 location: London, UK
-desc: Leading the transformation of archival systems through **AI-driven** indexing and *semantic search*. Managed a team of 45 engineers using `Rust`, `mdBook`, and ~~legacy monoliths~~ modern services to deliver the next generation of digital heritage platforms.
+desc:
+    Leading the transformation of archival systems through **AI-driven** indexing and *semantic search*.
+
+    Managed a team of 45 engineers using `Rust`, `mdBook`, and ~~legacy monoliths~~ modern services to deliver the next generation of digital heritage platforms.
 tags: Strategic Planning | AI Systems | Team Leadership
 active: true
 {{card-end}}

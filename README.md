@@ -169,6 +169,35 @@ desc: Led the **transformation** using *agile* and ~~waterfall~~ processes.
 
 Inline HTML (such as `<u>…</u>` for underline) is passed through unchanged.
 
+### Multi-line description
+
+Instead of hand-writing `<br>` for paragraph breaks, put the description on its
+own `desc:` line and let the following **indented** lines be the body. Lines
+indented further than the `desc:` key are collected as the description, and a
+**blank line** between paragraphs becomes a paragraph break:
+
+```markdown
+{{card-start}}
+#### Director
+desc:
+    First paragraph with **bold**.
+    Second line of the same paragraph.
+
+    A second paragraph, separated by a blank line.
+company: Example Corp
+tags: AI | Strategy
+{{card-end}}
+```
+
+The block ends when the indentation returns to the top level, so fields placed
+after it (`company`, `tags`, …) are still parsed normally. You can also mix a
+value on the `desc:` line with indented continuation lines:
+
+```markdown
+desc: Opening sentence.
+    Followed by an indented continuation line.
+```
+
 ### Multiple Images
 
 Add as many `![alt](url)` lines as needed — each renders as a full-width image.

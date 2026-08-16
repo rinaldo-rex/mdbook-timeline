@@ -174,6 +174,10 @@ const TIMELINE_CSS: &str = r#"
     color: var(--fg);
 }
 
+/* Paragraphs inside a multi-line description keep the card's line-height. */
+.tl-desc p { margin: 0 0 12px 0; line-height: 1.75; }
+.tl-desc p:last-child { margin-bottom: 0; }
+
 .tl-image {
     width: 100%;
     border-radius: 6px;
@@ -450,14 +454,19 @@ fn parse_card(_label: &str, card: &str) -> TimelineEntry {
     let mut active = false;
     let mut images: Vec<(String, String)> = Vec::new();
 
-    for line in card.lines() {
+    let lines: Vec<&str> = card.lines().collect();
+    let mut i = 0;
+    while i < lines.len() {
+        let line = lines[i];
         let trimmed = line.trim();
         if trimmed.is_empty() {
+            i += 1;
             continue;
         }
 
         if trimmed.starts_with("#### ") {
             title = Some(trimmed[5..].trim().to_string());
+            i += 1;
             continue;
         }
 
@@ -477,7 +486,36 @@ fn parse_card(_label: &str, card: &str) -> TimelineEntry {
             match key.as_str() {
                 "company" => company = Some(val.to_string()),
                 "location" => location = Some(val.to_string()),
-                "desc" | "description" => desc = Some(val.to_string()),
+                "desc" | "description" => {
+                    // Multi-line description: collect any line indented further
+                    // than the `desc:` key itself as continuation content. A
+                    // blank line between content lines becomes a paragraph
+                    // break (`\n\n`); adjacent lines join with a soft `\n`.
+                    let base_indent = indentation_of(line);
+                    let mut block = Vec::new();
+                    if !val.is_empty() {
+                        block.push(val.to_string());
+                    }
+                    let mut j = i + 1;
+                    while j < lines.len() {
+                        let next = lines[j];
+                        if next.trim().is_empty() {
+                            // Blank line: candidate paragraph separator.
+                            block.push(String::new());
+                            j += 1;
+                            continue;
+                        }
+                        if indentation_of(next) > base_indent {
+                            block.push(next.trim().to_string());
+                            j += 1;
+                        } else {
+                            break; // next field / title / end of block
+                        }
+                    }
+                    desc = Some(join_desc_block(block));
+                    i = j;
+                    continue;
+                }
                 "active" => active = val.eq_ignore_ascii_case("true"),
                 "tags" => {
                     tags = val
@@ -489,6 +527,7 @@ fn parse_card(_label: &str, card: &str) -> TimelineEntry {
                 _ => {}
             }
         }
+        i += 1;
     }
 
     TimelineEntry {
@@ -560,11 +599,7 @@ fn render_entry(entry: &TimelineEntry) -> String {
         }
         (None, None) => String::new(),
     };
-    let desc_html = entry
-        .desc
-        .as_ref()
-        .map(|d| format!("<p class=\"tl-desc\">{}</p>", md_inline(d)))
-        .unwrap_or_default();
+    let desc_html = entry.desc.as_ref().map(|d| render_desc_html(d)).unwrap_or_default();
     let images_html: String = entry
         .images
         .iter()
@@ -601,23 +636,67 @@ fn render_gap(a: &TimelineEntry, b: &TimelineEntry, idx: usize) -> String {
 
 // ── Helpers ─────────────────────────────────────────────────────────
 
+/// Render markdown to full HTML (paragraphs included) via pulldown-cmark,
+/// with GFM strikethrough enabled.
+fn md_html(text: &str) -> String {
+    let mut options = Options::empty();
+    options.insert(Options::ENABLE_STRIKETHROUGH);
+    let parser = Parser::new_ext(text.trim(), options);
+    let mut buf = String::new();
+    html::push_html(&mut buf, parser);
+    buf.trim().to_string()
+}
+
 /// Convert markdown to inline HTML, unwrapping the single wrapping `<p>…</p>`
 /// that pulldown-cmark generates for a text fragment. Supports bold, italics,
 /// strikethrough, inline code, links, inline HTML (e.g. `<u>…</u>`) and more.
 fn md_inline(text: &str) -> String {
-    let mut options = Options::empty();
-    options.insert(Options::ENABLE_STRIKETHROUGH);
-
-    let parser = Parser::new_ext(text.trim(), options);
-    let mut buf = String::new();
-    html::push_html(&mut buf, parser);
-
-    let trimmed = buf.trim();
+    let trimmed = md_html(text);
     if trimmed.starts_with("<p>") && trimmed.ends_with("</p>") {
         trimmed[3..trimmed.len() - 4].trim().to_string()
     } else {
-        trimmed.to_string()
+        trimmed
     }
+}
+
+/// Render a description value as HTML. A single-paragraph description stays a
+/// `<p class="tl-desc">`; a multi-paragraph (block) description is wrapped in
+/// `<div class="tl-desc">` so each paragraph keeps its own spacing.
+fn render_desc_html(desc: &str) -> String {
+    let html = md_html(desc);
+    if html.matches("<p>").count() <= 1 {
+        format!("<p class=\"tl-desc\">{}</p>", md_inline(desc))
+    } else {
+        format!("<div class=\"tl-desc\">{}</div>", html)
+    }
+}
+
+/// Number of leading whitespace characters in a line.
+fn indentation_of(line: &str) -> usize {
+    line.len() - line.trim_start().len()
+}
+
+/// Join a description block's raw lines into markdown:
+/// adjacent content lines join with a single `\n`, and a blank line between
+/// content becomes a paragraph break (`\n\n`). Leading/trailing blank lines
+/// and run-on blanks are dropped.
+fn join_desc_block(raw: Vec<String>) -> String {
+    let mut paragraphs: Vec<String> = Vec::new();
+    let mut cur: Vec<String> = Vec::new();
+    for line in raw {
+        if line.is_empty() {
+            if !cur.is_empty() {
+                paragraphs.push(cur.join("\n"));
+                cur.clear();
+            }
+        } else {
+            cur.push(line);
+        }
+    }
+    if !cur.is_empty() {
+        paragraphs.push(cur.join("\n"));
+    }
+    paragraphs.join("\n\n")
 }
 
 fn compute_gap_label(a: &str, b: &str) -> Option<String> {
@@ -791,5 +870,106 @@ tags: Rust | mdBook | Preprocessor
     fn test_md_inline_preserves_html_ampersand() {
         // `&` should be escaped in the rendered HTML, not passed raw.
         assert_eq!(md_inline("Evil & Co."), "Evil &amp; Co.");
+    }
+
+    #[test]
+    fn test_parse_multiline_desc_block() {
+        let input = r#"
+{{label}}2024{{/label}}
+{{card-start}}
+#### Director
+company: Global Tech
+desc:
+    First paragraph with **bold**.
+    Second line of the first paragraph.
+
+    Second paragraph with *italic*.
+tags: AI | Strategy | Leadership
+active: true
+{{card-end}}
+"#;
+        let entries = parse_entries(input);
+        assert_eq!(entries.len(), 1);
+        let e = &entries[0];
+        assert_eq!(
+            e.desc.as_deref(),
+            Some(
+                "First paragraph with **bold**.\nSecond line of the first paragraph.\n\n\
+                 Second paragraph with *italic*."
+            )
+        );
+        // Fields after the block must still be detected.
+        assert_eq!(e.tags, vec!["AI", "Strategy", "Leadership"]);
+        assert!(e.active);
+        assert_eq!(e.company.as_deref(), Some("Global Tech"));
+    }
+
+    #[test]
+    fn test_parse_multiline_desc_keeps_subsequent_fields() {
+        // Fields after an indented desc block must not be swallowed.
+        let input = r#"
+{{label}}2024{{/label}}
+{{card-start}}
+#### Director
+desc:
+    Only paragraph here.
+company: After Block
+location: Paris
+{{card-end}}
+"#;
+        let entries = parse_entries(input);
+        assert_eq!(entries[0].desc.as_deref(), Some("Only paragraph here."));
+        assert_eq!(entries[0].company.as_deref(), Some("After Block"));
+        assert_eq!(entries[0].location.as_deref(), Some("Paris"));
+    }
+
+    #[test]
+    fn test_parse_desc_mixed_same_line_and_block() {
+        // A value on the `desc:` line plus indented continuation lines.
+        let input = r#"
+{{label}}2024{{/label}}
+{{card-start}}
+#### Director
+desc: Opening sentence.
+    Continued on the next indented line.
+{{card-end}}
+"#;
+        let entries = parse_entries(input);
+        assert_eq!(
+            entries[0].desc.as_deref(),
+            Some("Opening sentence.\nContinued on the next indented line.")
+        );
+    }
+
+    #[test]
+    fn test_render_desc_paragraphs() {
+        // Single paragraph stays a `<p class="tl-desc">`.
+        let single = render_desc_html("Just **one** paragraph.");
+        assert_eq!(
+            single,
+            "<p class=\"tl-desc\">Just <strong>one</strong> paragraph.</p>"
+        );
+
+        // Multiple paragraphs wrap in `<div class="tl-desc">`.
+        let multi = render_desc_html("First paragraph.\n\nSecond paragraph.");
+        assert!(multi.starts_with("<div class=\"tl-desc\">"));
+        assert!(multi.contains("<p>First paragraph.</p>"));
+        assert!(multi.contains("<p>Second paragraph.</p>"));
+        assert!(multi.ends_with("</div>"));
+    }
+
+    #[test]
+    fn test_join_desc_block() {
+        assert_eq!(join_desc_block(vec![]), "");
+        assert_eq!(join_desc_block(vec!["a".into(), "b".into()]), "a\nb");
+        assert_eq!(
+            join_desc_block(vec!["a".into(), "".into(), "b".into()]),
+            "a\n\nb"
+        );
+        // Leading/trailing blanks and run-on blanks are dropped.
+        assert_eq!(
+            join_desc_block(vec!["".into(), "a".into(), "".into(), "".into(), "b".into(), "".into()]),
+            "a\n\nb"
+        );
     }
 }
