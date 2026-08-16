@@ -3,6 +3,7 @@ use mdbook_preprocessor::{
     errors::Error,
     Preprocessor, PreprocessorContext,
 };
+use pulldown_cmark::{html, Options, Parser};
 use regex::Regex;
 use std::sync::LazyLock;
 
@@ -540,21 +541,29 @@ fn render_entry(entry: &TimelineEntry) -> String {
     } else {
         ""
     };
-    let title = entry.title.as_deref().unwrap_or("Untitled");
+    // Applied at render time (not parse time) so raw values stay intact for
+    // parse tests and for HTML injected by other preprocessors.
+    let title = entry
+        .title
+        .as_deref()
+        .map(md_inline)
+        .unwrap_or_else(|| "Untitled".to_string());
     let company_html = match (&entry.company, &entry.location) {
-        (Some(c), Some(l)) => {
-            format!("<div class=\"tl-company\">{} <span class=\"tl-location\">• {}</span></div>", c, l)
-        }
-        (Some(c), None) => format!("<div class=\"tl-company\">{}</div>", c),
+        (Some(c), Some(l)) => format!(
+            "<div class=\"tl-company\">{} <span class=\"tl-location\">• {}</span></div>",
+            md_inline(c),
+            md_inline(l)
+        ),
+        (Some(c), None) => format!("<div class=\"tl-company\">{}</div>", md_inline(c)),
         (None, Some(l)) => {
-            format!("<div class=\"tl-company\"><span class=\"tl-location\">{}</span></div>", l)
+            format!("<div class=\"tl-company\"><span class=\"tl-location\">{}</span></div>", md_inline(l))
         }
         (None, None) => String::new(),
     };
     let desc_html = entry
         .desc
         .as_ref()
-        .map(|d| format!("<p class=\"tl-desc\">{}</p>", d))
+        .map(|d| format!("<p class=\"tl-desc\">{}</p>", md_inline(d)))
         .unwrap_or_default();
     let images_html: String = entry
         .images
@@ -567,7 +576,7 @@ fn render_entry(entry: &TimelineEntry) -> String {
         let tags: String = entry
             .tags
             .iter()
-            .map(|t| format!("<span class=\"tl-tag\">{}</span>", t))
+            .map(|t| format!("<span class=\"tl-tag\">{}</span>", md_inline(t)))
             .collect::<Vec<_>>()
             .join("");
         format!("<div class=\"tl-tags\">{}</div>", tags)
@@ -575,7 +584,7 @@ fn render_entry(entry: &TimelineEntry) -> String {
 
     format!(
         "<div class=\"tl-entry{}\"><div class=\"tl-label-wrap\"><span class=\"tl-label\">{}</span></div><div class=\"tl-card\"><div class=\"tl-card-title\"><h3>{}</h3>{}</div>{}{}{}{}</div></div>",
-        active_class, &entry.label, title, badge,
+        active_class, md_inline(&entry.label), title, badge,
         company_html, desc_html, images_html, tags_html,
     )
 }
@@ -591,6 +600,25 @@ fn render_gap(a: &TimelineEntry, b: &TimelineEntry, idx: usize) -> String {
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────
+
+/// Convert markdown to inline HTML, unwrapping the single wrapping `<p>…</p>`
+/// that pulldown-cmark generates for a text fragment. Supports bold, italics,
+/// strikethrough, inline code, links, inline HTML (e.g. `<u>…</u>`) and more.
+fn md_inline(text: &str) -> String {
+    let mut options = Options::empty();
+    options.insert(Options::ENABLE_STRIKETHROUGH);
+
+    let parser = Parser::new_ext(text.trim(), options);
+    let mut buf = String::new();
+    html::push_html(&mut buf, parser);
+
+    let trimmed = buf.trim();
+    if trimmed.starts_with("<p>") && trimmed.ends_with("</p>") {
+        trimmed[3..trimmed.len() - 4].trim().to_string()
+    } else {
+        trimmed.to_string()
+    }
+}
 
 fn compute_gap_label(a: &str, b: &str) -> Option<String> {
     let x: i64 = a.parse().ok()?;
@@ -719,5 +747,49 @@ tags: Rust | mdBook | Preprocessor
 "#;
         let entries = parse_entries(input);
         assert_eq!(entries[0].tags, vec!["Rust", "mdBook", "Preprocessor"]);
+    }
+
+    #[test]
+    fn test_md_inline_basic() {
+        // bold, italics, strikethrough, inline code, links, underline HTML
+        assert_eq!(md_inline("**bold**"), "<strong>bold</strong>");
+        assert_eq!(md_inline("*italic*"), "<em>italic</em>");
+        assert_eq!(md_inline("~~strike~~"), "<del>strike</del>");
+        assert_eq!(md_inline("`code`"), "<code>code</code>");
+        assert_eq!(
+            md_inline("[site](https://example.com)"),
+            r#"<a href="https://example.com">site</a>"#
+        );
+        // `<u>` is a raw inline HTML tag, so it passes straight through.
+        assert_eq!(md_inline("<u>under</u>"), "<u>under</u>");
+    }
+
+    #[test]
+    fn test_render_desc_markdown() {
+        let entry = TimelineEntry {
+            label: "2024".to_string(),
+            title: Some("**Executive** Director".to_string()),
+            company: Some("Global *Tech*".to_string()),
+            location: Some("London, UK".to_string()),
+            desc: Some(
+                "Leading **the** transformation with *AI* and ~~legacy~~ systems.".to_string(),
+            ),
+            tags: vec!["AI".to_string()],
+            active: true,
+            images: Vec::new(),
+        };
+        let html = render_entry(&entry);
+        assert!(html.contains("<h3><strong>Executive</strong> Director</h3>"));
+        assert!(html.contains("Global <em>Tech</em>"));
+        assert!(html.contains(
+            "<p class=\"tl-desc\">Leading <strong>the</strong> transformation with <em>AI</em> \
+             and <del>legacy</del> systems.</p>"
+        ));
+    }
+
+    #[test]
+    fn test_md_inline_preserves_html_ampersand() {
+        // `&` should be escaped in the rendered HTML, not passed raw.
+        assert_eq!(md_inline("Evil & Co."), "Evil &amp; Co.");
     }
 }

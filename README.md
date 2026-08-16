@@ -149,6 +149,26 @@ Inside `{{card-start}}` / `{{card-end}}`, fields follow `key: value` syntax:
 
 All fields are **optional** except the title.
 
+### Markdown in cards
+
+Every text field (`title`, `company`, `location`, `desc`, `tags`, and the entry
+`label`) supports **inline markdown**:
+
+| Syntax           | Result                                    |
+|------------------|-------------------------------------------|
+| `**bold**`       | **bold**                                  |
+| `*italic*`       | *italic*                                  |
+| `~~strikethrough~~` | ~~strikethrough~~                      |
+| `` `code` ``     | `` `code` `` (inline)                      |
+| `[link](url)`    | a link                                    |
+| `<u>underline</u>` | <u>underline</u> (raw inline HTML)      |
+
+```markdown
+desc: Led the **transformation** using *agile* and ~~waterfall~~ processes.
+```
+
+Inline HTML (such as `<u>…</u>` for underline) is passed through unchanged.
+
 ### Multiple Images
 
 Add as many `![alt](url)` lines as needed — each renders as a full-width image.

@@ -35,7 +35,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-e9d7c043.js";
+            window.path_to_searchindex_js = "searchindex-a25c96e6.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-272dedee.js"></script>
@@ -376,189 +376,8 @@
 .tl.dimmed .tl-duration-label.keep { opacity: 0.45 !important; }
 
 </style>
-<style>
-.inplace-note-trigger {
-  font-size: 0.75em;
-  vertical-align: super;
-  line-height: 1;
-  color: var(--links, #0969da);
-  font-weight: 600;
-  cursor: help;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  padding: 3px;
-}
-/* Inline wrapper — surrounds trigger in inline context */
-.inplace-note-inline {
-  position: relative;
-  display: inline-block;
-  vertical-align: baseline;
-}
-/* Invisible hover bridge above trigger (matches popover gap) */
-.inplace-note-inline::after {
-  content: "";
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  min-width: 1.5em;
-  height: 10px;
-}
-/* Popover for inline-only notes (no block elements) */
-.inplace-note-inline .inplace-note-popover-inline {
-  display: none;
-  position: absolute;
-  bottom: calc(100% + 10px);
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--theme-popup-bg, var(--bg, #fff));
-  color: var(--fg, #000);
-  border: 1px solid var(--theme-popup-border, #d0d7de);
-  border-radius: 8px;
-  padding: 10px 14px;
-  min-width: 40rem;
-  max-width: 380px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-  z-index: 1000;
-  font-size: 80%;
-  font-weight: normal;
-  line-height: 1.5;
-  text-align: left;
-  white-space: normal;
-  cursor: auto;
-}
-.inplace-note-inline .inplace-note-popover-inline::after {
-  content: "";
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 7px solid transparent;
-  border-top-color: var(--theme-popup-bg, var(--bg, #fff));
-}
-.inplace-note-inline .inplace-note-popover-inline::before {
-  content: "";
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 8px solid transparent;
-  border-top-color: var(--theme-popup-border, #d0d7de);
-}
-.inplace-note-inline:hover .inplace-note-popover-inline {
-  display: block;
-}
-/* Block wrapper — used when note content has block elements */
-.inplace-note-block {
-  position: relative;
-  display: inline-block;
-  vertical-align: top;
-}
-.inplace-note-block .inplace-note-popover-block {
-  display: none;
-  position: absolute;
-  bottom: calc(100% + 10px);
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--theme-popup-bg, var(--bg, #fff));
-  color: var(--fg, #000);
-  border: 1px solid var(--theme-popup-border, #d0d7de);
-  border-radius: 8px;
-  padding: 12px 16px;
-  min-width: 40rem;
-  max-width: 380px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-  z-index: 1000;
-  font-size: 80%;
-  font-weight: normal;
-  line-height: 1.5;
-  text-align: left;
-  white-space: normal;
-  cursor: auto;
-}
-.inplace-note-block .inplace-note-popover-block::after {
-  content: "";
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 7px solid transparent;
-  border-top-color: var(--theme-popup-bg, var(--bg, #fff));
-}
-.inplace-note-block .inplace-note-popover-block::before {
-  content: "";
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 8px solid transparent;
-  border-top-color: var(--theme-popup-border, #d0d7de);
-}
-.inplace-note-block:hover .inplace-note-popover-block {
-  display: block;
-}
-/* Popover inner content styling */
-.inplace-note-content a {
-  color: var(--links, #0969da);
-}
-.inplace-note-content a:hover {
-  color: var(--links, #0969da);
-}
-.inplace-note-content p {
-  margin: 0.25em 0;
-}
-.inplace-note-content p:first-child {
-  margin-top: 0;
-}
-.inplace-note-content p:last-child {
-  margin-bottom: 0;
-}
-.inplace-note-content pre {
-  margin: 0.5em 0;
-  padding: 8px 12px;
-  font-size: var(--code-font-size, 0.875em);
-  background: var(--quote-bg, #f6f8fa);
-}
-.inplace-note-content code {
-  font-size: var(--code-font-size, 0.875em);
-  color: var(--inline-code-color, #301900);
-}
-.inplace-note-content pre code {
-  color: var(--fg, #000);
-}
-.inplace-note-content ul,
-.inplace-note-content ol {
-  margin: 0.25em 0;
-  padding-left: 1.5em;
-}
-.inplace-note-content blockquote {
-  margin: 0.5em 0;
-  padding: 0 0.75em;
-  border-left: 3px solid var(--theme-popup-border, #d0d7de);
-  color: var(--fg, #656d76);
-}
-.inplace-note-content table {
-  margin: 0.5em 0;
-  border-collapse: collapse;
-  font-size: 0.85em;
-}
-.inplace-note-content th,
-.inplace-note-content td {
-  padding: 4px 8px;
-  border: 1px solid var(--table-border-color, #d0d7de);
-}
-.inplace-note-content th {
-  background: var(--table-header-bg, #f6f8fa);
-}
-.inplace-note-content td {
-  background: var(--theme-popup-bg, var(--bg, #fff));
-}
-</style>
 <h1 id="career-timeline"><a class="header" href="#career-timeline">Career Timeline</a></h1>
-<p>A chronological record of strategic growth<span class="inplace-note-inline"><sup class="inplace-note-trigger">1</sup><span class="inplace-note-popover-inline"><span class="inplace-note-content">Testing</span></span></span>, key achievements, and the evolution of
+<p>A chronological record of strategic growth, key achievements, and the evolution of
 a career spanning two decades of innovation.</p>
 <div class="tl" id="tl-1">
 <div class="tl-entry active">
@@ -568,7 +387,7 @@ a career spanning two decades of innovation.</p>
 <h3>Executive Director of Innovation</h3>
 <span class="tl-badge-active">Active</span></div>
 <div class="tl-company">Global Tech Solutions <span class="tl-location">• London, UK</span></div>
-<p class="tl-desc">Leading the transformation<span class="inplace-note-inline"><sup class="inplace-note-trigger">2</sup><span class="inplace-note-popover-inline"><span class="inplace-note-content">Testing new</span></span></span> of archival systems through AI-driven indexing and semantic search. Managed a team of 45 engineers to deliver the next generation of digital heritage platforms.</p>
+<p class="tl-desc">Leading the transformation of archival systems through <strong>AI-driven</strong> indexing and <em>semantic search</em>. Managed a team of 45 engineers using <code>Rust</code>, <code>mdBook</code>, and <del>legacy monoliths</del> modern services to deliver the next generation of digital heritage platforms.</p>
 <div class="tl-tags"><span class="tl-tag">Strategic Planning</span><span class="tl-tag">AI Systems</span><span class="tl-tag">Team Leadership</span></div>
 </div>
 </div>

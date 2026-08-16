@@ -1,6 +1,6 @@
 [package]
 name = "mdbook-timeline"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 description = "A mdBook preprocessor that renders interactive timelines with HTML + CSS"
 license = "MIT"
@@ -16,3 +16,4 @@ mdbook-preprocessor = "0.5"
 regex = "1"
 serde_json = "1"
 anyhow = "1"
+pulldown-cmark = "0.13"
