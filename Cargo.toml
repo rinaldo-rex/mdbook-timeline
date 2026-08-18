@@ -1,6 +1,6 @@
 [package]
 name = "mdbook-timeline"
-version = "0.1.4"
+version = "0.1.5"
 edition = "2021"
 description = "A mdBook preprocessor that renders interactive timelines with HTML + CSS"
 license = "MIT"

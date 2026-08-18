@@ -224,6 +224,75 @@ const TIMELINE_CSS: &str = r#"
 .tl.dimmed .tl-entry.hovered { opacity: 1; }
 .tl.dimmed .tl-duration-label { opacity: 0.15; }
 .tl.dimmed .tl-duration-label.keep { opacity: 0.45 !important; }
+
+/* ── Responsive: tablet (≤ 768px) ─────────────────────────────────── */
+@media (max-width: 768px) {
+    .tl {
+        width: 80vw;
+        margin-left: auto;
+        margin-right: auto;
+        padding: 0;
+    }
+
+    .tl::before { left: 36px; }
+
+    .tl-entry {
+        grid-template-columns: 48px 1fr;
+        gap: 0 20px;
+    }
+
+    .tl-entry::before { left: 60px; }
+
+    .tl-label-wrap { padding-top: 24px; padding-right: 12px; }
+
+    .tl-card { padding: 20px 24px; }
+
+    .tl-card-title h3 { font-size: 1.25rem; }
+
+    .tl-duration-label { display: none; }
+}
+
+/* ── Responsive: mobile (≤ 480px) ─────────────────────────────────── */
+@media (max-width: 480px) {
+    .tl {
+        width: 80vw;
+        margin-left: auto;
+        margin-right: auto;
+        padding: 0;
+    }
+
+    /* Hide the vertical timeline line on mobile */
+    .tl::before { display: none; }
+
+    /* Switch to stacked layout: label above card */
+    .tl-entry {
+        grid-template-columns: 1fr;
+        gap: 8px 0;
+        margin-bottom: 12px;
+    }
+
+    /* Hide the dot on mobile */
+    .tl-entry::before { display: none; }
+
+    /* Label sits above the card, left-aligned */
+    .tl-label-wrap {
+        justify-content: flex-start;
+        padding: 0 0 4px 0;
+    }
+
+    .tl-card { padding: 16px 18px; }
+
+    .tl-card-title h3 { font-size: 1.1rem; }
+
+    .tl-badge-active { font-size: 0.8rem; padding: 3px 8px; }
+
+    .tl-tags { gap: 6px; }
+    .tl-tag { font-size: 0.85rem; padding: 3px 8px; }
+
+    .tl-image img { height: 140px; }
+
+    .tl-dimmed .tl-entry { opacity: 1; }
+}
 "#;
 
 // ── JS ──────────────────────────────────────────────────────────────
